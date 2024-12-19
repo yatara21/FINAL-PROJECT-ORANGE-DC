@@ -1,0 +1,75 @@
+---
+- name: Deploy Docker Application on webservers
+  hosts: webservers
+  become: yes
+
+  tasks:
+    - name: Ensure required dependencies are installed
+      yum:
+        name:
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+          - python3
+          - python3-pip
+        state: present
+
+    - name: Ensure Python Docker SDK is installed
+      pip:
+        name: docker
+        state: present
+
+    - name: Ensure Docker is installed
+      yum:
+        name: docker-ce
+        state: present
+
+    - name: Ensure Docker service is running and enabled
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Check if the container is running
+      docker_container_info:
+        name: "my-python-app"
+      register: container_info
+      failed_when: false
+
+    - name: Stop the running container if it exists
+      when: container_info.container is defined
+      block:
+        - name: Stop the running container
+          docker_container:
+            name: "my-python-app"
+            state: stopped
+
+    - name: Remove the container if it exists
+      when: container_info.container is defined
+      block:
+        - name: Remove the container
+          docker_container:
+            name: "my-python-app"
+            state: absent
+
+    - name: Remove any existing local Docker image to ensure a fresh pull
+      docker_image:
+        name: "yatara21/final-project-odc"
+        tag: "latest"
+        state: absent
+
+    - name: Pull the latest Docker image from Docker Hub
+      docker_image:
+        name: "yatara21/final-project-odc"
+        tag: "latest"
+        source: pull
+
+    - name: Run the updated Docker container
+      docker_container:
+        name: "my-python-app"
+        image: "yatara21/final-project-odc:latest"
+        state: started
+        restart_policy: always
+        ports:
+          - "5000:5000"
+        detach: yes  # Run in the background

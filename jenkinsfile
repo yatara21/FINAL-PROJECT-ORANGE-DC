@@ -1,0 +1,76 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_IMAGE = "test01"
+        DOCKER_TAG = "latest"
+        GITHUB_REPO = "https://github.com/yatara21/Final-Project-ODC"
+        GITHUB_CREDENTIALS = 'GitHUb-final-project-ODC'                         // GitHub Token
+        DOCKER_HUB_CREDENTIALS = 'docker-hub-credentials-id'                    // Docker Hub Token
+        DOCKER_HUB_REPO = 'yatara21/final-project-odc'
+        ANSIBLE_PLAYBOOK = '/home/khalid/Desktop/Ansible/playbook.yml'
+        ANSIBLE_INVENTORY = '/home/khalid/Desktop/Ansible/inventory'
+        EMAIL_RECIPIENT = 'arabnada771@gmail.com'
+    }
+
+    stages {
+        // Pull code from GitHub
+        stage('Fetch from GitHub') {
+            steps {
+                git branch: 'main', 
+                    url: "${GITHUB_REPO}", 
+                    credentialsId: "${GITHUB_CREDENTIALS}"
+            }
+        }
+        
+        // Build Docker image
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE:$DOCKER_TAG .'
+            }
+        }
+        
+        // Log in to Docker Hub
+        stage('Login to Docker Hub') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(
+                        credentialsId: "${DOCKER_HUB_CREDENTIALS}", 
+                        usernameVariable: 'DOCKER_USER', 
+                        passwordVariable: 'DOCKER_PASS'
+                    )]) {
+                        sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    }
+                }
+            }
+        }
+
+        // Push Docker image to Docker Hub
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                sh 'docker tag $DOCKER_IMAGE:$DOCKER_TAG $DOCKER_HUB_REPO:$DOCKER_TAG'
+                sh 'docker push $DOCKER_HUB_REPO:$DOCKER_TAG'
+            }
+        }
+
+        // Deploy and update Docker containers
+        stage('Install Docker on webservers') {
+            steps {
+                script {
+                    sh "ansible-playbook -i $ANSIBLE_INVENTORY $ANSIBLE_PLAYBOOK"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            emailext(
+                subject: "Jenkins Build Status: ${currentBuild.result}",
+                body: "The Jenkins pipeline build has completed with status: ${currentBuild.result}.\n\nBuild URL: ${env.BUILD_URL}",
+                to: "${EMAIL_RECIPIENT}"
+            )
+        }
+    }
+}
+
