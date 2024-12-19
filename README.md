@@ -13,17 +13,14 @@ This project demonstrates the integration of Python, Docker, Jenkins, and Ansibl
 5. [Setup and Installation](#setup-and-installation)
 6. [Continuous Integration with Jenkins](#continuous-integration-with-jenkins)
 7. [Configuration Management with Ansible](#configuration-management-with-ansible)
-8. [Contributing](#contributing)
-9. [License](#license)
-10. [Acknowledgments](#acknowledgments)
 
----
+
 
 ## Project Overview
 
 This repository provides a comprehensive framework for employing DevOps tools to optimize software development and deployment workflows. By leveraging containerization, automation, and CI/CD pipelines, this project enhances both reliability and reproducibility.
 
----
+
 
 ## Features
 
@@ -31,8 +28,10 @@ This repository provides a comprehensive framework for employing DevOps tools to
 - **Automated CI/CD Pipeline**: Utilizes Jenkins to build, test, and deploy applications efficiently.
 - **Infrastructure as Code (IaC)**: Employs Ansible to streamline environment setup and deployment.
 - **Customizable Templates**: Offers flexibility for adapting to various project requirements.
+- **Automatic Rebuild**: Jenkins pipeline automatically triggers rebuilds whenever new code is pushed to the GitHub repository.
+- **Automatic Email Notifications**: Automatically sends the status of the build to the system administrator using the `Sendmail` package.
 
----
+
 
 ## Project Structure
 
@@ -47,116 +46,204 @@ test01/
 └── templates/          # Template files used by Ansible for configuration
 ```
 
----
 
-## Prerequisites
-
-Ensure the following tools are installed:
-
-- **Python 3.x**: For running the application.
-- **Docker**: To containerize the application.
-- **Jenkins**: For executing CI/CD pipelines.
-- **Ansible**: For configuration management and deployment.
-- **Git**: For version control and repository access.
-
----
-
-## Setup and Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/yatara21/test01.git
-cd test01
-```
-
-### 2. Install Python Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Build the Docker Image
-
-```bash
-docker build -t test01-app .
-```
-
-### 4. Run the Application
-
-```bash
-docker run -p 8000:8000 test01-app
-```
-
-The application will be accessible at [http://localhost:8000](http://localhost:8000).
-
----
 
 ## Continuous Integration with Jenkins
 
-The project includes a `jenkinsfile` that defines a CI/CD pipeline with the following stages:
+The Jenkins integration automates the CI/CD process for building, and deploying applications. The pipeline, defined in the `jenkinsfile`, handles stages like code fetching, Docker image building, logging into Docker Hub, pushing the image, and deploying the application to web servers using Ansible.
 
-1. **Build Stage**: Compiles the application and creates a Docker image.
-2. **Test Stage**: Runs test scripts to validate application functionality.
-3. **Deploy Stage**: Uses Ansible to deploy the application to the specified environment.
+1. **Fetch from GitHub**: 
 
-### Setting Up the Jenkins Pipeline
+   This stage pulls the latest code from the specified GitHub repository using the   credentials defined in the environment variables.
 
-1. Log in to Jenkins and create a new pipeline project.
-2. Configure the pipeline to point to this repository.
-3. Run the pipeline to execute the automated workflow.
+```groovy
+stage('Fetch from GitHub') {
+    steps {
+        git branch: 'main', 
+            url: "${GITHUB_REPO}", 
+            credentialsId: "${GITHUB_CREDENTIALS}"
+    }
+}
+```
 
----
+
+2. **Build Docker Image**: 
+
+   This stage builds the Docker image based on the code fetched from the repository.
+
+```groovy
+stage('Build Docker Image') {
+    steps {
+        sh 'docker build -t $DOCKER_IMAGE:$DOCKER_TAG .'
+    }
+}
+```
+- **Purpose**: Builds a Docker image from the Dockerfile in the repository.
+- **Explanation**: The `docker build` command uses the Dockerfile in the current directory (`.`) and tags the image with the specified `$DOCKER_IMAGE:$DOCKER_TAG.`
+
+
+3. **Login to Docker Hub**: 
+
+   This stage logs into Docker Hub using credentials stored in Jenkins.
+
+```groovy
+stage('Login to Docker Hub') {
+    steps {
+        script {
+            withCredentials([usernamePassword(
+                credentialsId: "${DOCKER_HUB_CREDENTIALS}", 
+                usernameVariable: 'DOCKER_USER', 
+                passwordVariable: 'DOCKER_PASS'
+            )]) {
+                sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+            }
+        }
+    }
+}
+
+```
+- **Purpose**: Authenticates Jenkins with Docker Hub to allow pushing the Docker image to a repository.
+- **Explanation**: Uses the `withCredentials` block to securely inject Docker Hub credentials into the environment, which are then used to log in using `docker login`.
+
+4. **Push Docker Image to Docker Hub**: 
+
+   This stage tags the Docker image and pushes it to Docker Hub.
+
+```groovy
+stage('Push Docker Image to Docker Hub') {
+    steps {
+        sh 'docker tag $DOCKER_IMAGE:$DOCKER_TAG $DOCKER_HUB_REPO:$DOCKER_TAG'
+        sh 'docker push $DOCKER_HUB_REPO:$DOCKER_TAG'
+    }
+}
+```
+- **Purpose**: Tags the built Docker image and uploads it to the Docker Hub repository.
+- **Explanation**: First, the image is tagged with the `DOCKER_HUB_REPO:$DOCKER_TAG`, and then it is pushed to the repository using the `docker push` command.
+
+5. **Install Docker on Webservers**: 
+
+   This stage uses Ansible to install Docker and deploy the application on the web servers.
+
+```groovy
+stage('Install Docker on webservers') {
+    steps {
+        script {
+            sh "ansible-playbook -i $ANSIBLE_INVENTORY $ANSIBLE_PLAYBOOK"
+        }
+    }
+}
+```
+- **Purpose**: Deploys the Docker container to remote web servers using Ansible.
+- **Explanation**: Runs the Ansible playbook (`playbook.yml`) on the target web servers listed in the `inventory file`. The playbook ensures that Docker is installed and the latest container is deployed.
+
+6. **Post Build Actions**: 
+
+   This block sends an email notification with the status of the Jenkins build.
+
+```groovy
+post {
+    always {
+        emailext(
+            subject: "Jenkins Build Status: ${currentBuild.result}",
+            body: "The Jenkins pipeline build has completed with status: ${currentBuild.result}.\n\nBuild URL: ${env.BUILD_URL}",
+            to: "${EMAIL_RECIPIENT}"
+        )
+    }
+}
+```
+- **Purpose**: Sends an email notification to the recipient regardless of whether the build succeeds or fails.
+- **Explanation**: The `emailext` function sends an email with the build result and a link to the build URL. The email is sent to the address specified in `EMAIL_RECIPIENT`.
+
+### Summary of Each Stage:
+
+1. **Post Build Actions**: Fetches the latest code from the specified GitHub repository.
+2. **Build Docker Image**: Builds a Docker image from the fetched code.
+3. **Login to Docker Hub**: Logs into Docker Hub using provided credentials.
+4. **Push Docker Image to Docker Hub**: Tags and pushes the Docker image to Docker Hub.
+5. **Install Docker on Webservers**: Deploys the application to web servers using Ansible.
+6. **Post Build Actions**: Sends an email notification with the status of the build.
+
+
+
 
 ## Configuration Management with Ansible
 
-Ansible is employed to automate the setup of infrastructure and application deployment.
+This playbook automates the deployment of a Dockerized Python application on web servers. It ensures required dependencies and Docker are installed, stops and removes any existing containers, pulls the latest Docker image from Docker Hub, and starts a new container.
+```groovy
+---
+- name: Deploy Docker Application on webservers
+  hosts: webservers
+  become: yes
 
-### Key Files
+  tasks:
+    - name: Install dependencies and Docker
+      yum:
+        name:
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+          - python3
+          - python3-pip
+          - docker-ce
+        state: present
 
-- **`playbook.yml`**: Automates the environment setup and deployment process.
-- **`inventory`**: Specifies the target servers or hosts for deployment.
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Manage existing Docker container
+      block:
+        - name: Stop and remove container if running
+          docker_container:
+            name: "my-python-app"
+            state: absent
+          when: container_info.container is defined
+
+    - name: Pull latest Docker image
+      docker_image:
+        name: "your-username/your-repo"
+        tag: "latest"
+        source: pull
+
+    - name: Run Docker container
+      docker_container:
+        name: "my-python-app"
+        image: "your-username/your-repo:latest"
+        state: started
+        restart_policy: always
+        ports:
+          - "5000:5000"
+        detach: yes
+```
+### Summary of Key Tasks:
+
+- **Install Dependencies**: Installs required packages and Docker.
+- **Ensure Docker Service**: Starts and enables Docker.
+- **Manage Containers**: Stops and removes any existing container.
+- **Pull Docker Image**: Fetches the latest image from Docker Hub.
+- **Run Docker Container**: Deploys the updated container with the application. 
 
 ### Running the Playbook
 
-To deploy the application, execute the following command:
+Execute the following command to deploy the application:
 
 ```bash
 ansible-playbook -i inventory playbook.yml
 ```
 
----
+This command will:
 
-## Contributing
+- Provision the required infrastructure.
+- Configure dependencies and runtime environments.
+- Deploy the latest version of the application.
 
-We welcome contributions to enhance this project. To get involved:
+### *Monitoring and Debugging*
 
-1. Fork the repository.
-2. Create a feature branch:
-   ```bash
-   git checkout -b feature-name
-   ```
-3. Implement your changes and commit them:
-   ```bash
-   git commit -m "Add feature description"
-   ```
-4. Push your changes to your fork:
-   ```bash
-   git push origin feature-name
-   ```
-5. Open a pull request for review.
-
----
-
-## License
-
-This project is distributed under the MIT License. Refer to the [LICENSE](LICENSE) file for full details.
-
----
-
-## Acknowledgments
-
-We extend our gratitude to the open-source community for their invaluable contributions and resources that inspired this project.
-
----
+- Use the `-vvv` flag for verbose output when running playbooks:
+  ```bash
+  ansible-playbook -i inventory playbook.yml -vvv
+  ```
+- Check logs for detailed error messages and task execution details.
 
