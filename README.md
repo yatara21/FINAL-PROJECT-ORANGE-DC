@@ -9,10 +9,9 @@ This project demonstrates the integration of Python, Docker, Jenkins, and Ansibl
 1. [Project Overview](#project-overview)
 2. [Features](#features)
 3. [Project Structure](#project-structure)
-4. [Prerequisites](#prerequisites)
-5. [Setup and Installation](#setup-and-installation)
-6. [Continuous Integration with Jenkins](#continuous-integration-with-jenkins)
-7. [Configuration Management with Ansible](#configuration-management-with-ansible)
+4. [Setup and Installation](#setup-and-installation)
+5. [Continuous Integration with Jenkins](#continuous-integration-with-jenkins)
+6. [Configuration Management with Ansible](#configuration-management-with-ansible)
 
 
 
@@ -46,7 +45,68 @@ test01/
 └── templates/          # Template files used by Ansible for configuration
 ```
 
+## Setup and Installation
+Follow the steps below to set up and run this project locally or on your server.
 
+1. **Clone the Repository**: Start by cloning the GitHub repository to your local machine or server
+```
+git clone https://github.com/yatara21/Final-Project-ODC.git
+cd Final-Project-ODC
+```
+2. **Install Required Software**: Ensure the following tools are installed on your system:
+   - **Docker**: For building and running the application in a container.
+   - **Ansible**: For automating the deployment and configuration on web servers.
+   - **Python 3.x**: Required to run the application.
+   - **Jenkins**: To automate the CI/CD pipeline (if you want to use Jenkins for integration).
+   - **Sendmail**: To send the status of your Build. 
+   - **Ngrok**: To expose your Jenkins server to the Public Internet.
+
+3. **Install Python Dependencies**: This project requires certain Python libraries. Install them using the `requirements.txt` file:
+```
+pip install -r requirements.txt
+```
+
+4. **Set Up Docker and Jenkins (Optional)**:
+
+      4.1 **Build the Docker Image**: To build the Docker image for the application
+   ```
+   docker build -t yatara21/final-project-odc .
+   ```
+      4.2 **Run the Docker Container**: To run the application in a Docker container on your local machine
+   ```
+   docker run -p 5000:5000 yatara21/final-project-odc:latest
+   ```
+5. **Configure and Run Ansible Playbook**:
+   You can use the Ansible playbook to deploy the application on your web servers.
+   
+      5.1 **Edit Ansible Inventory File**:
+   Ensure the `inventory` file contains the correct target web servers where you want to deploy the application.
+   
+      Example:
+   ```
+   [webservers]
+   your-server-ip
+   ```
+      5.2 **Run the Playbook**:
+   Run the Ansible playbook to install Docker, pull the latest Docker image, and deploy the container:
+   ```
+   ansible-playbook -i inventory playbook.yml
+   ```
+   This will ensure that the required dependencies are installed on your web server, and the Docker container is running with the latest image.
+
+6. **Set Up Jenkins (Optional)**: If you want to automate the build, test, and deployment process using Jenkins, follow these steps:
+
+   - Create a new Jenkins Pipeline.
+   
+   - Add the `Jenkinsfile` from the project repository.
+
+   - Set up the necessary credentials in Jenkins for GitHub and Docker Hub (as specified in the `Jenkinsfile`).
+
+   - Run the Jenkins Pipeline to automatically fetch the code, build the Docker image, test, push to Docker Hub, and deploy to the web servers.
+
+   - Access the Application
+
+   After the deployment is complete, the application should be accessible at `http://<your-web-server-ip>:5000`.
 
 ## Continuous Integration with Jenkins
 
