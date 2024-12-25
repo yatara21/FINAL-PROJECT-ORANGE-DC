@@ -10,7 +10,7 @@ pipeline {
         DOCKER_HUB_REPO = 'yatara21/final-project-odc'
         ANSIBLE_PLAYBOOK = './playbook.yml'
         ANSIBLE_INVENTORY = './inventory'
-        EMAIL_RECIPIENT = 'arabnada771@gmail.com'
+        EMAIL_RECIPIENT = 'example-your-email'
     }
 
     stages {
