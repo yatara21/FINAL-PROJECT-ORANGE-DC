@@ -1,41 +1,64 @@
-# Test01 Project
+# Final Project of the DevOps Program by ![Static Badge](https://img.shields.io/badge/Orange%20Digital%20Center-orange), ![Static Badge](https://img.shields.io/badge/EGYPT-green)
 
-This project demonstrates the integration of Python, Docker, Jenkins, and Ansible to streamline the development and deployment of applications. It serves as a modern template for implementing DevOps best practices, emphasizing automation, scalability, and reliability.
 
----
 
-## Table of Contents
+This project outlines a workflow to build and deploy a simple web application using a CI/CD pipeline and modern DevOps tools, including Docker, Jenkins, Ansible, and Vagrant. The objective is to automate the end-to-end process of application development, containerization, deployment, and execution on target machines.
+
+
+
+## Table of Contents :heavy_check_mark:
 
 1. [Project Overview](#project-overview)
-2. [Features](#features)
-3. [Project Structure](#project-structure)
-4. [Setup and Installation](#setup-and-installation)
-5. [Continuous Integration with Jenkins](#continuous-integration-with-jenkins)
-6. [Configuration Management with Ansible](#configuration-management-with-ansible)
+2. [Objective and Benefits](#Objective-and-Benefits)
+3. [Features](#features)
+4. [Screenshots](#Screenshots)
+5. [Project Structure](#project-structure)
+6. [Setup and Installation](#setup-and-installation)
+7. [Continuous Integration with Jenkins](#continuous-integration-with-jenkins)
+8. [Configuration Management with Ansible](#configuration-management-with-ansible)
+
+
+## Project Overview :heavy_check_mark:
+
+The project demonstrates a complete DevOps pipeline that integrates Python, Docker, Jenkins, and Ansible to streamline the development, deployment, and automation of applications. It provides a modern template for implementing DevOps best practices by focusing on Automation using Jenkins Pipeline, Dockerization , Configuartions Management using Ansible and Reliability
+
+
+## Objective and Benefits :heavy_check_mark:
+
+- **Automation**: Eliminates manual steps, reducing errors and improving efficiency.
+- **Portability**: Containerized application ensures consistent behavior across environments.
+- **Scalability**: Demonstrates deployment to multiple target machines, a scalable setup for real-world use.
+- **Learning Opportunity**: Provides hands-on experience with key DevOps tools and practices.
 
 
 
-## Project Overview
+## Features :heavy_check_mark:
 
-This repository provides a comprehensive framework for employing DevOps tools to optimize software development and deployment workflows. By leveraging containerization, automation, and CI/CD pipelines, this project enhances both reliability and reproducibility.
-
-
-
-## Features
-
-- **Dockerized Application**: Ensures compatibility across different environments and platforms.
-- **Automated CI/CD Pipeline**: Utilizes Jenkins to build, test, and deploy applications efficiently.
-- **Infrastructure as Code (IaC)**: Employs Ansible to streamline environment setup and deployment.
+- **Dockerized Application**: Ensures compatibility across different environments and platforms. 
+- **Automated CI/CD Pipeline**: Utilizes Jenkins to build, test, and deploy applications efficiently. 
+- **Infrastructure as Code (IaC)**: Employs Ansible to streamline environment setup and deployment. 
 - **Customizable Templates**: Offers flexibility for adapting to various project requirements.
-- **Automatic Rebuild**: Jenkins pipeline automatically triggers rebuilds whenever new code is pushed to the GitHub repository.
-- **Automatic Email Notifications**: Automatically sends the status of the build to the system administrator using the `Sendmail` package.
+- **Automatic Rebuild**: Jenkins pipeline automatically triggers rebuilds whenever new code is pushed to the GitHub repository. 
+- **Automatic Email Notifications**: Automatically sends the status of the build to the system administrator using the `Sendmail` package. 
+
+## Screenshots
+
+1. **Accessing our Application**  
+   ![Accessing Application](./images/Accessing-app.png)
+
+2. **Retrieving Data from Open Weather**  
+   ![Retrieving Data](./images/data.png)
+
+3. **Our Data as a Diagram**  
+   ![Data Diagram](./images/plot-data.png)
 
 
 
-## Project Structure
+
+## Project Structure :heavy_check_mark:
 
 ```
-test01/
+Final-Project-ODC/
 ├── app.py              # Core Python application file
 ├── Dockerfile          # Configuration for Docker image creation
 ├── jenkinsfile         # Script defining Jenkins pipeline stages
@@ -45,7 +68,7 @@ test01/
 └── templates/          # Template files used by Ansible for configuration
 ```
 
-## Setup and Installation
+## Setup and Installation :heavy_check_mark:
 Follow the steps below to set up and run this project locally or on your server.
 
 1. **Clone the Repository**: Start by cloning the GitHub repository to your local machine or server
@@ -68,18 +91,18 @@ pip install -r requirements.txt
 
 4. **Set Up Docker and Jenkins (Optional)**:
 
-      4.1 **Build the Docker Image**: To build the Docker image for the application
+   :green_circle: 4.1 **Build the Docker Image**: To build the Docker image for the application
    ```
    docker build -t yatara21/final-project-odc .
    ```
-      4.2 **Run the Docker Container**: To run the application in a Docker container on your local machine
+     :green_circle: 4.2 **Run the Docker Container**: To run the application in a Docker container on your local machine
    ```
    docker run -p 5000:5000 yatara21/final-project-odc:latest
    ```
 5. **Configure and Run Ansible Playbook**:
    You can use the Ansible playbook to deploy the application on your web servers.
    
-      5.1 **Edit Ansible Inventory File**:
+     :green_circle: 5.1 **Edit Ansible Inventory File**:
    Ensure the `inventory` file contains the correct target web servers where you want to deploy the application.
    
       Example:
@@ -87,7 +110,7 @@ pip install -r requirements.txt
    [webservers]
    your-server-ip
    ```
-      5.2 **Run the Playbook**:
+     :green_circle: 5.2 **Run the Playbook**:
    Run the Ansible playbook to install Docker, pull the latest Docker image, and deploy the container:
    ```
    ansible-playbook -i inventory playbook.yml
@@ -108,9 +131,19 @@ pip install -r requirements.txt
 
    After the deployment is complete, the application should be accessible at `http://<your-web-server-ip>:5000`.
 
+<img src="./images/VM01.png" alt="Alt Text" width="1000">
+<img src="./images/VM02.png" alt="Alt Text" width="1000">
+
+
 ## Continuous Integration with Jenkins
 
 The Jenkins integration automates the CI/CD process for building, and deploying applications. The pipeline, defined in the `jenkinsfile`, handles stages like code fetching, Docker image building, logging into Docker Hub, pushing the image, and deploying the application to web servers using Ansible.
+
+
+<img src="./images/Pipeline-Output.png" alt="Alt Text" width="1000">
+
+
+
 
 1. **Fetch from GitHub**: 
 
@@ -200,6 +233,10 @@ stage('Install Docker on webservers') {
 
    This block sends an email notification with the status of the Jenkins build.
 
+
+<img src="./images/Build-Status-Email.png" alt="Alt Text" width="1000">
+
+
 ```groovy
 post {
     always {
@@ -216,7 +253,7 @@ post {
 
 ### Summary of Each Stage:
 
-1. **Post Build Actions**: Fetches the latest code from the specified GitHub repository.
+1. **Fetch Code from GitHub**: Fetches the latest code from the specified GitHub repository.
 2. **Build Docker Image**: Builds a Docker image from the fetched code.
 3. **Login to Docker Hub**: Logs into Docker Hub using provided credentials.
 4. **Push Docker Image to Docker Hub**: Tags and pushes the Docker image to Docker Hub.
@@ -226,7 +263,7 @@ post {
 
 
 
-## Configuration Management with Ansible
+## Configuration Management with Ansible :heavy_check_mark: :memo:
 
 This playbook automates the deployment of a Dockerized Python application on web servers. It ensures required dependencies and Docker are installed, stops and removes any existing containers, pulls the latest Docker image from Docker Hub, and starts a new container.
 ```groovy
@@ -277,7 +314,7 @@ This playbook automates the deployment of a Dockerized Python application on web
           - "5000:5000"
         detach: yes
 ```
-### Summary of Key Tasks:
+### Summary of Key Tasks: 
 
 - **Install Dependencies**: Installs required packages and Docker.
 - **Ensure Docker Service**: Starts and enables Docker.
@@ -306,4 +343,26 @@ This command will:
   ansible-playbook -i inventory playbook.yml -vvv
   ```
 - Check logs for detailed error messages and task execution details.
+
+## Conclusion :heavy_check_mark:
+This project demonstrates a streamlined DevOps workflow, integrating modern tools and best practices to achieve efficient, scalable, and automated application deployment. It serves as a robust foundation for building and deploying production-grade applications.
+
+## Future Enhancements :heavy_check_mark:
+- Add monitoring and logging with Prometheus and Grafana.
+- Support for Kubernetes-based deployments.
+- Integrate security testing into the CI/CD pipeline.
+
+
+## Troubleshooting :heavy_check_mark:
+- **Docker Build Fails**: Ensure Docker is installed and running on your system.
+- **Jenkins Authentication Error**: Check that your GitHub personal access token is correctly configured in Jenkins credentials.
+
+
+## Contact  :heavy_check_mark:
+For any inquiries or feedback, please contact:
+- **Name**: Khalid Nada
+- **Email**: khalidelshawadfy771@gmail.com
+- **GitHub**: https://github.com/yatara21
+
+
 

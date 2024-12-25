@@ -1,0 +1,8 @@
+jenkinsfile
+playbook.yml
+inventory
+
+images/
+.gitignore
+.git
+README.md
